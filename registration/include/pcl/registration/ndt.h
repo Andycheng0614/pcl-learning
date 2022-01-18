@@ -45,6 +45,18 @@
 
 #include <unsupported/Eigen/NonLinearOptimization>
 
+#if (1)
+#include <sys/syscall.h>  
+#define gettidv1() syscall(__NR_gettid) 
+#define debug_enter()   (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][begin]\n", (long int)gettidv1(), __func__, __LINE__))
+#define debug_out()     (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][end]\n", (long int)gettidv1(), __func__, __LINE__))
+#define debug_mid()     (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][middle]\n", (long int)gettidv1(), __func__, __LINE__))
+#else
+#define debug_enter()
+#define debug_out() 
+#define debug_mid() 
+#endif
+
 namespace pcl
 {
   /** \brief A 3D Normal Distribution Transform registration implementation for point cloud data.

@@ -57,6 +57,7 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::NormalDistributions
   , point_gradient_ ()
   , point_hessian_ ()
 {
+  debug_enter();
   reg_name_ = "NormalDistributionsTransform";
 
   double gauss_c1, gauss_c2, gauss_d3;
@@ -70,12 +71,14 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::NormalDistributions
 
   transformation_epsilon_ = 0.1;
   max_iterations_ = 35;
+  debug_out();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointSource, typename PointTarget> void
 pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeTransformation (PointCloudSource &output, const Eigen::Matrix4f &guess)
 {
+  debug_enter();
   nr_iterations_ = 0;
   converged_ = false;
 
@@ -88,8 +91,7 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeTransformati
   gauss_d1_ = -log ( gauss_c1 + gauss_c2 ) - gauss_d3;
   gauss_d2_ = -2 * log ((-log ( gauss_c1 * exp ( -0.5 ) + gauss_c2 ) - gauss_d3) / gauss_d1_);
 
-  if (guess != Eigen::Matrix4f::Identity ())
-  {
+  if (guess != Eigen::Matrix4f::Identity()) {
     // Initialise final transformation to the guessed one
     final_transformation_ = guess;
     // Apply guessed transformation prior to search for neighbours
@@ -117,10 +119,16 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeTransformati
   double delta_p_norm;
 
   // Calculate derivates of initial transform vector, subsequent derivative calculations are done in the step length determination.
-  score = computeDerivatives (score_gradient, hessian, output, p);
+  std::cout << "call computeDerivatives() begin" << std::endl;
+  score = computeDerivatives(score_gradient,
+                             hessian,
+                             output,
+                             p);
+  std::cout << "call computeDerivatives() end" << std::endl;
 
-  while (!converged_)
-  {
+  while (!converged_) {
+    std::cout << "@@@ nr_iterations_ = " << nr_iterations_ << std::endl;
+
     // Store previous transformation
     previous_transformation_ = transformation_;
 
@@ -140,7 +148,9 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeTransformati
     }
 
     delta_p.normalize ();
-    delta_p_norm = computeStepLengthMT (p, delta_p, delta_p_norm, step_size_, transformation_epsilon_ / 2, score, score_gradient, hessian, output);
+    std::cout << "call computeStepLengthMT() begin" << std::endl;
+    delta_p_norm = computeStepLengthMT(p, delta_p, delta_p_norm, step_size_, transformation_epsilon_ / 2, score, score_gradient, hessian, output);
+    std::cout << "call computeStepLengthMT() end" << std::endl;
     delta_p *= delta_p_norm;
 
 
@@ -169,12 +179,15 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeTransformati
         ((transformation_epsilon_ > 0 && translation_sqr <= transformation_epsilon_) && (transformation_rotation_epsilon_ <= 0)))
     {
       converged_ = true;
+      std::cout << "@@@ converged_ = true, nr_iterations_ = " << nr_iterations_ << std::endl;
     }
   }
 
   // Store transformation probability.  The realtive differences within each scan registration are accurate
   // but the normalization constants need to be modified for it to be globally accurate
   trans_probability_ = score / static_cast<double> (input_->points.size ());
+
+  debug_out();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +198,8 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivatives 
                                                                                  Eigen::Matrix<double, 6, 1> &p,
                                                                                  bool compute_hessian)
 {
+  debug_enter();
+
   // Original Point and Transformed Point
   PointSource x_pt, x_trans_pt;
   // Original Point and Transformed Point (for math)
@@ -231,6 +246,9 @@ pcl::NormalDistributionsTransform<PointSource, PointTarget>::computeDerivatives 
 
     }
   }
+
+  debug_out();
+
   return (score);
 }
 

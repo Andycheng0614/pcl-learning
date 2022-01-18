@@ -51,6 +51,17 @@
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection.h>
 
+#if (1)
+#include <sys/syscall.h>  
+#define gettidv1() syscall(__NR_gettid) 
+#define debug_enter()   (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][begin]\n", (long int)gettidv1(), __func__, __LINE__))
+#define debug_out()     (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][end]\n", (long int)gettidv1(), __func__, __LINE__))
+#define debug_mid()     (printf("[pid=%ld, pcl::Registration]debug: [%s, %d][middle]\n", (long int)gettidv1(), __func__, __LINE__))
+#else
+#define debug_enter()
+#define debug_out() 
+#define debug_mid() 
+#endif
 namespace pcl
 {
   /** \brief @b Registration represents the base registration class for general purpose, ICP-like methods.
@@ -125,6 +136,8 @@ namespace pcl
         , force_no_recompute_reciprocal_ (false)
         , point_representation_ ()
       {
+        debug_enter();
+        debug_out();
       }
 
       /** \brief destructor. */
@@ -146,7 +159,12 @@ namespace pcl
         * \endcode
         */
       void
-      setTransformationEstimation (const TransformationEstimationPtr &te) { transformation_estimation_ = te; }
+      setTransformationEstimation (const TransformationEstimationPtr &te)
+      {
+        debug_enter();
+        transformation_estimation_ = te;
+        debug_out();
+      }
 
       /** \brief Provide a pointer to the correspondence estimation object.
         * (e.g., regular, reciprocal, normal shooting etc.) 
@@ -170,7 +188,12 @@ namespace pcl
         * \endcode
         */
       void
-      setCorrespondenceEstimation (const CorrespondenceEstimationPtr &ce) { correspondence_estimation_ = ce; }
+      setCorrespondenceEstimation (const CorrespondenceEstimationPtr &ce)
+      {
+        debug_enter();
+        correspondence_estimation_ = ce;
+        debug_out();
+      }
 
       /** \brief Provide a pointer to the input source 
         * (e.g., the point cloud that we want to align to the target)
@@ -185,18 +208,15 @@ namespace pcl
       }
 
       /** \brief Get a pointer to the input point cloud dataset target. */
-      inline PointCloudSourceConstPtr const
-      getInputSource () { return (input_ ); }
+      inline PointCloudSourceConstPtr const getInputSource () { return (input_ ); }
 
       /** \brief Provide a pointer to the input target (e.g., the point cloud that we want to align the input source to)
         * \param[in] cloud the input point cloud target
         */
-      virtual inline void 
-      setInputTarget (const PointCloudTargetConstPtr &cloud); 
+      virtual inline void setInputTarget (const PointCloudTargetConstPtr &cloud); 
 
       /** \brief Get a pointer to the input point cloud dataset target. */
-      inline PointCloudTargetConstPtr const 
-      getInputTarget () { return (target_ ); }
+      inline PointCloudTargetConstPtr const getInputTarget () { return (target_ ); }
 
 
       /** \brief Provide a pointer to the search object used to find correspondences in
@@ -207,9 +227,10 @@ namespace pcl
         * confident that the tree will be set correctly.
         */
       inline void
-      setSearchMethodTarget (const KdTreePtr &tree, 
-                             bool force_no_recompute = false) 
+      setSearchMethodTarget (const KdTreePtr &tree,
+                                         bool force_no_recompute = false)
       { 
+        debug_enter();
         tree_ = tree; 
         if (force_no_recompute)
         {
@@ -217,15 +238,12 @@ namespace pcl
         }
         // Since we just set a new tree, we need to check for updates
         target_cloud_updated_ = true;
+        debug_out();
       }
 
       /** \brief Get a pointer to the search method used to find correspondences in the
         * target cloud. */
-      inline KdTreePtr
-      getSearchMethodTarget () const
-      {
-        return (tree_);
-      }
+      inline KdTreePtr getSearchMethodTarget() const { return (tree_); }
 
       /** \brief Provide a pointer to the search object used to find correspondences in
         * the source cloud (usually used by reciprocal correspondence finding).
@@ -237,7 +255,8 @@ namespace pcl
       inline void
       setSearchMethodSource (const KdTreeReciprocalPtr &tree, 
                              bool force_no_recompute = false) 
-      { 
+      {
+        debug_enter();
         tree_reciprocal_ = tree; 
         if ( force_no_recompute )
         {
@@ -245,6 +264,7 @@ namespace pcl
         }
         // Since we just set a new tree, we need to check for updates
         source_cloud_updated_ = true;
+        debug_out();
       }
 
       /** \brief Get a pointer to the search method used to find correspondences in the
